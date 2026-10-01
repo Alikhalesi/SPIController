@@ -1,0 +1,46 @@
+# ==========================================
+# Vivado Project Version Control .gitignore
+# ==========================================
+
+# 1. Ignore temporary log, journal, and runtime files
+*.log
+*.jou
+*.str
+*.debug
+*.tmp
+*.prm
+*.bxml
+
+# 2. Ignore Vivado-generated hardware and local user settings
+.Xil/
+*.hw/
+*.data/
+*.cache/
+*.ip_user_files/
+
+# 3. Ignore all compilation, synthesis, and implementation runs
+*.runs/
+*.sim/
+
+# 4. Ignore exported hardware handoff and workspace artifacts
+*.sdk/
+*.xsa
+*.xstatus
+
+# 5. Ignore specific block design wrapper and dynamic generation files
+# (Only keep the primary .bd file if using Block Designs)
+# bd/*/hdl/
+# bd/*/ip/
+# bd/*/ui/
+
+# 6. Ensure critical source and project structures are NEVER ignored
+!*.xpr
+!*.xdc
+!*.v
+!*.sv
+!*.vhd
+!*.vhdl
+!*.xci
+!*.tcl
+!*.mem
+!*.coe
