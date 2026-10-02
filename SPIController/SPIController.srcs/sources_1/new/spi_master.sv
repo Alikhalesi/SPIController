@@ -21,7 +21,7 @@
 
 //cpol = 0
 //cpha = 0
-module spi_master #(parameter int freq,localparam int dvsr=(100_000_000/(2*freq))-1)
+module spi_master #(parameter int freq=2_000_000)
 (
 input logic clk,
 input logic nrst,
@@ -33,13 +33,16 @@ input logic start,
 input logic[7:0] din,
 output logic[7:0] dout
 
+
     );
+    
+    localparam int dvsr=(100_000_000/(2*freq))-1;
     
     logic r_ready,next_ready;
     logic[7:0] r_din,next_din;
     logic[7:0] r_dout,next_dout;
     logic r_sclk,next_sclk;
-    logic r_bit_count,next_bit_count;
+    logic[2:0] r_bit_count,next_bit_count;
     logic r_mosi,next_mosi;
     
     logic [23:0] r_counter,next_counter;
@@ -84,6 +87,7 @@ output logic[7:0] dout
             next_sclk=r_sclk;
             next_bit_count=r_bit_count;
             next_counter=r_counter;
+            next_mosi=r_mosi;
             case (r_state)
                 IDLE:
                     begin
@@ -94,6 +98,7 @@ output logic[7:0] dout
                                 next_ready=0;
                                 next_state=P0;
                                 next_counter=0;
+                                next_sclk=0;
                             end
                          else
                             begin
@@ -125,6 +130,7 @@ output logic[7:0] dout
                                         next_bit_count=r_bit_count-1;
                                         next_state=P0;
                                         next_counter=0;
+                                        next_sclk=0;
                                     end
                             end
                            else
@@ -138,6 +144,6 @@ output logic[7:0] dout
     assign dout=r_dout;
     assign ready=r_ready;
     assign mosi=r_mosi;
-    
+    assign sclk=r_sclk;
     
 endmodule
