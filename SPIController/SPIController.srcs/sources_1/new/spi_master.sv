@@ -82,7 +82,8 @@ output logic[7:0] dout
             next_dout=r_dout;
             next_state=r_state;
             next_sclk=r_sclk;
-             next_bit_count=r_bit_count;
+            next_bit_count=r_bit_count;
+            next_counter=r_counter;
             case (r_state)
                 IDLE:
                     begin
@@ -101,11 +102,12 @@ output logic[7:0] dout
                      end
                 P0:
                     begin
-                       next_mosi= r_din[r_bit_count];
+                       next_mosi = r_din[r_bit_count];
                        if(r_counter==dvsr)
                           begin
                             next_state=P1;
                             next_sclk=1;
+                            next_counter=0;
                           end
                        else
                         next_counter=r_counter+1;
@@ -122,6 +124,7 @@ output logic[7:0] dout
                                     begin
                                         next_bit_count=r_bit_count-1;
                                         next_state=P0;
+                                        next_counter=0;
                                     end
                             end
                            else
@@ -132,7 +135,9 @@ output logic[7:0] dout
     
     
     
-    
+    assign dout=r_dout;
+    assign ready=r_ready;
+    assign mosi=r_mosi;
     
     
 endmodule
