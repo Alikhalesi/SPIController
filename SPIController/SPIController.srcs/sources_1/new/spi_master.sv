@@ -99,6 +99,7 @@ output logic[7:0] dout
                                 next_state=P0;
                                 next_counter=0;
                                 next_sclk=0;
+                                next_dout=0;
                             end
                          else
                             begin
