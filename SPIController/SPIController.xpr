@@ -89,7 +89,69 @@
   <FileSets Version="1" Minor="32">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1" RelGenDir="$PGENDIR/sources_1">
       <Filter Type="Srcs"/>
+      <File Path="$PSRCDIR/sources_1/imports/new/debouncer.sv">
+        <FileInfo>
+          <Attr Name="AutoDisabled" Val="1"/>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../UartController/FIFO.srcs/sources_1/imports/new/debouncer.sv"/>
+          <Attr Name="ImportTime" Val="1786762799"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/new/16b_to_d.sv">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../UartController/FIFO.srcs/sources_1/imports/new/16b_to_d.sv"/>
+          <Attr Name="ImportTime" Val="1783343657"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/new/common.sv">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../UartController/FIFO.srcs/sources_1/imports/new/common.sv"/>
+          <Attr Name="ImportTime" Val="1786763839"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/new/reset_synchronizer.sv">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../UartController/FIFO.srcs/sources_1/imports/new/reset_synchronizer.sv"/>
+          <Attr Name="ImportTime" Val="1783744991"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/new/spi_master.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/new/sseg.sv">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../UartController/FIFO.srcs/sources_1/imports/new/sseg.sv"/>
+          <Attr Name="ImportTime" Val="1783394908"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/imports/new/sseg_mux.sv">
+        <FileInfo>
+          <Attr Name="ImportPath" Val="$PPRDIR/../../UartController/FIFO.srcs/sources_1/imports/new/sseg_mux.sv"/>
+          <Attr Name="ImportTime" Val="1790328785"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/top.sv">
         <FileInfo>
           <Attr Name="UsedIn" Val="synthesis"/>
           <Attr Name="UsedIn" Val="implementation"/>
@@ -98,7 +160,7 @@
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="spi_master"/>
+        <Option Name="TopModule" Val="top"/>
         <Option Name="TopAutoSet" Val="TRUE"/>
       </Config>
     </FileSet>

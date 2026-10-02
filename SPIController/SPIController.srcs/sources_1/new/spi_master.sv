@@ -31,7 +31,8 @@ output logic ready,
 input logic miso,
 input logic start,
 input logic[7:0] din,
-output logic[7:0] dout
+output logic[7:0] dout,
+output logic finished
 
 
     );
@@ -44,6 +45,7 @@ output logic[7:0] dout
     logic r_sclk,next_sclk;
     logic[2:0] r_bit_count,next_bit_count;
     logic r_mosi,next_mosi;
+    logic r_finish,next_finish;
     
     logic [23:0] r_counter,next_counter;
     
@@ -63,6 +65,7 @@ output logic[7:0] dout
                     r_bit_count<=7;
                     r_counter<=0;
                     r_mosi<=0;
+                    r_finish<=0;
                 end
              else
                 begin
@@ -74,6 +77,7 @@ output logic[7:0] dout
                     r_bit_count<=next_bit_count;
                     r_counter<=next_counter;
                     r_mosi<=next_mosi;
+                    r_finish<=next_finish;
                 end
         end 
     
@@ -88,6 +92,7 @@ output logic[7:0] dout
             next_bit_count=r_bit_count;
             next_counter=r_counter;
             next_mosi=r_mosi;
+            next_finish=0;
             case (r_state)
                 IDLE:
                     begin
@@ -129,6 +134,7 @@ output logic[7:0] dout
                                     begin
                                   
                                         next_state=IDLE;
+                                        next_finish=0;
                                     end
                                 else
                                     begin
@@ -150,5 +156,5 @@ output logic[7:0] dout
     assign ready=r_ready;
     assign mosi=r_mosi;
     assign sclk=r_sclk;
-    
+    assign finished=r_finish;
 endmodule
