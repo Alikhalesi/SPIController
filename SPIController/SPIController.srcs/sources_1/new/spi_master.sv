@@ -120,11 +120,15 @@ output logic[7:0] dout
                     end
                 P1:
                     begin
-                        next_dout={r_dout[6:0],miso};
+                    
                            if(r_counter==dvsr)
                             begin
+                                next_dout={r_dout[6:0],miso};
                                 if(r_bit_count==0)
-                                    next_state=IDLE;
+                                    begin
+                                  
+                                        next_state=IDLE;
+                                    end
                                 else
                                     begin
                                         next_bit_count=r_bit_count-1;
