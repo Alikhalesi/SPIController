@@ -23,7 +23,7 @@
 module tb_top(
 
     );
- // =========================================================================
+  // =========================================================================
     // 1. Clock & Interface Signals
     // =========================================================================
     logic clk;
@@ -62,83 +62,79 @@ module tb_top(
     end
 
     // =========================================================================
-    // 4. Mock SPI Peripheral Behavioral Model
+    // 4. Mock SPI Peripheral Model (Strict CPOL=0, CPHA=0 Mode)
     // =========================================================================
-    // This blocks mirrors a physical device. It shifts out a predefined response 
-    // register value (e.g., 0xA5) on falling edges of sclk whenever csn is low.
-    logic [7:0] mock_device_reg = 8'hA5; // Data expected to be read by the UUT
-    logic [2:0] miso_bit_cnt = 3'd7;
+    logic [7:0] mock_device_reg = 8'hA5; // Data the master will read
+    logic [2:0] miso_bit_cnt;
 
-    always_ff @(negedge sclk or posedge csn) begin
+    // Mode 0 requires combinatorial drive or instant driving on CSN falling edge
+    always_comb begin
         if (csn) begin
-            miso        <= 1'b0;
-            miso_bit_cnt <= 3'd7; // Reset index when unselected
+            miso = 1'b0;
         end else begin
-            miso        <= mock_device_reg[miso_bit_cnt];
-            miso_bit_cnt <= miso_bit_cnt - 1'b1;
+            miso = mock_device_reg[miso_bit_cnt];
         end
     end
 
-    // Monitor SPI MOSI transactions in the console window
+    // Manage the bit pointer tracking
+    always_ff @(negedge sclk or posedge csn) begin
+        if (csn) begin
+            miso_bit_cnt <= 3'd7; // Reset index to the MSB
+        end else begin
+            if (miso_bit_cnt > 0)
+                miso_bit_cnt <= miso_bit_cnt - 1'b1;
+            else
+                miso_bit_cnt <= 3'd7; // Roll over for next byte if multi-byte
+        end
+    end
+
+    // =========================================================================
+    // 5. MOSI Protocol Monitor (CPOL=0, CPHA=0 samples on RISING edge)
+    // =========================================================================
     logic [7:0] captured_mosi_byte;
     logic [2:0] mosi_bit_cnt = 3'd7;
 
-    always_ff @(posedge sclk) begin
-        if (!csn) begin
+    always_ff @(posedge sclk or posedge csn) begin
+        if (csn) begin
+            mosi_bit_cnt <= 3'd7;
+        end else begin
             captured_mosi_byte[mosi_bit_cnt] <= mosi;
             if (mosi_bit_cnt == 0) begin
-                $display("[TB INFO] @ %0t ns | SPI Byte Sent out from Master: 8'h%h", $time, captured_mosi_byte);
+                $display("[TB INFO] @ %0t ns | SPI Master Sent: 8'h%h", $time, captured_mosi_byte);
                 mosi_bit_cnt <= 3'd7;
-            end
-             else begin
+            end 
+            else begin
                 mosi_bit_cnt <= mosi_bit_cnt - 1'b1;
             end
         end
     end
 
-    // Reset bit counter when chip select goes high
-    always_ff @(posedge csn) begin
-        mosi_bit_cnt <= 3'd7;
-    end
-
     // =========================================================================
-    // 5. Test Stimulus Flow
+    // 6. Test Stimulus Flow
     // =========================================================================
     initial begin
-        // Initialize Inputs
         clk  = 0;
         nrst = 1;
         btn  = 0;
 
-        // Apply Reset
         #40;
         nrst = 0;
-        #20
+        #40;
         nrst=1;
-        $display("[TB STATUS] Global Asynchronous Reset Released.");
-        
-        // Wait for system synchronization settle down
         #40;
 
-        // Trigger the FSM transaction via button press
+        // Trigger transaction
         @(posedge clk);
         btn = 1;
-        $display("[TB STATUS] Pressing Trigger Button (btn=1)...");
         
-        // Keep button pressed for a few cycles then release
         repeat (5) @(posedge clk);
         btn = 0;
-        $display("[TB STATUS] Releasing Trigger Button (btn=0).");
 
-        // Wait for the Master sequence to process and complete
-        // The LED goes high when entering WAIT_FOR_FINISH -> TEAR_DOWN states
+        // Wait for implementation completion
         wait(led == 1);
-        $display("[TB SUCCESS] LED detected High! Transaction finished.");
+        $display("[TB SUCCESS] SPI Mode 0 Transaction Finished Successfully!");
         
-        // Give it a brief tail execution window before shutting down simulation
         #200;
-        $display("[TB STATUS] Simulation ended cleanly.");
         $finish;
     end
-
 endmodule
