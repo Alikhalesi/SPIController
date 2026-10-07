@@ -51,7 +51,7 @@ output logic finished
     
     typedef enum logic[1:0] {IDLE=2'b00,P0=2'b01,P1=2'b10} state;
     
-    state r_state,next_state;
+  state r_state,next_state;
     
     always_ff @(posedge clk,negedge nrst)
         begin

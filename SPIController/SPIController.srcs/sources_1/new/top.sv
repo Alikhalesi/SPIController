@@ -38,7 +38,38 @@ output logic led
     
     logic synced_rst;
     reset_synchronizer rst_synchronizer(.nrst(nrst),.clk(clk),.sync_nrst(synced_rst));
-  
+    
+  logic write_enable;
+    logic read_enable;// read operation is asynchronous, this signal just pop the data from FIFO.
+    
+    logic transmit_finished;
+    
+    logic[7:0] fifo_read;
+    logic[7:0] fifo_write;
+    logic fifo_empty;
+    logic fifo_full;
+    fifo  #(.DATA_WIDTH(8)) fifo_instance
+    (.clk(clk),.nrst(synced_rst),.w_en(write_enable),.r_en(read_enable),.r_data(fifo_read),.w_data(fifo_write),.empty(fifo_empty),.full(fifo_full));
+    
+    
+    //set by actuator
+    logic start_transfer;
+
+    logic spi_master_ready;
+  spi_master master(
+ .clk(clk),
+ .nrst(synced_rst),
+.sclk(sclk),
+.mosi(mosi),
+.ready(ready),
+.miso(miso),
+.start(start_transfer),
+.din(din),
+.dout(fifo_write),
+.finished(write_enable)
+);
+
+    
   
   
   logic ready;
@@ -68,7 +99,7 @@ typedef enum logic [3:0] {
   
 } state_t;
   
-  state_t r_state,next_state;
+  (* mark_debug = "true" *) state_t r_state,next_state;
     logic r_csn,next_csn;
     logic[4:0] r_counter,next_counter;
       logic[7:0] r_din,next_din;
@@ -142,7 +173,7 @@ typedef enum logic [3:0] {
                 if(ready)
                     begin
                         next_start=1;
-                        next_din=8'd0;
+                        next_din=8'd1;
                         next_state=WAIT_FOR_SETTLE;
                     end
             end
@@ -188,11 +219,11 @@ typedef enum logic [3:0] {
 
 logic[3:0] hard_sseg_ctrl=4'b1111;
 assign sseg_ctrl[7:4]=hard_sseg_ctrl;
-assign start_signal= r_state==TEAR_DOWN_TRANSACTION;
+ assign start_signal= (r_led==1);
  logic finished_signal;
 
 
-sseg_mux seven_mux(.number( {8'b0,r_din} ),
+sseg_mux seven_mux(.number( {8'b0,r_dout} ),
 .ctrl(sseg_ctrl[3:0]),
 .data(sseg_data),
 .start_signal(start_signal),
