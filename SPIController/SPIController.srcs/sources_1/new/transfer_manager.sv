@@ -28,11 +28,12 @@ input logic spi_master_ready,
 input logic spi_master_finished,
 output logic csn,
 output logic[7:0] spi_master_din,
-output spi_master_start_transfer,
+output logic spi_master_start_transfer,
 input logic start,
 output logic ready,
 input logic [7:0] instruction,
-input logic [7:0] addr
+input logic [7:0] addr,
+output logic finish
     );
     
       
@@ -56,6 +57,7 @@ logic r_ready,next_ready;
 logic[7:0] r_instruction,next_instruction;
 logic[7:0] r_addr,next_addr;
 logic [7:0] r_readed_byte_count,next_readed_byte_count;
+logic  r_finish,next_finish;
     
     always_ff @(posedge clk, negedge nrst)
         begin
@@ -71,6 +73,7 @@ logic [7:0] r_readed_byte_count,next_readed_byte_count;
                     r_instruction<=0;
                     r_addr<=0;
                     r_readed_byte_count<=0;
+                    r_finish<=0;
                 end
              else
                 begin
@@ -84,6 +87,7 @@ logic [7:0] r_readed_byte_count,next_readed_byte_count;
                     r_instruction<=next_instruction;
                     r_addr<=next_addr;
                     r_readed_byte_count<=next_readed_byte_count;
+                    r_finish<=next_finish;
                 end
         end 
     
@@ -100,6 +104,7 @@ logic [7:0] r_readed_byte_count,next_readed_byte_count;
     next_instruction<=r_instruction;
     next_addr<=r_addr;
     next_readed_byte_count<=r_readed_byte_count;
+    next_finish<=r_finish;
         case (r_state)
             IDLE:
                 begin
@@ -114,6 +119,7 @@ logic [7:0] r_readed_byte_count,next_readed_byte_count;
                         begin
                             next_ready=0;
                             next_readed_byte_count=0;
+                            next_finish=0;
                         end
                 end
             TEAR_UP_TRANSACTION:
@@ -140,15 +146,21 @@ logic [7:0] r_readed_byte_count,next_readed_byte_count;
                 begin
                     if (r_spi_master_finished)
                         begin
-                           next_spi_master_din=READ_PATTERN;
-                           next_spi_master_start_transfer=1;
                            if(r_readed_byte_count==READ_COUNT)
                                 next_state=TEAR_DOWN_TRANSACTION;
+                           else
+                                begin
+                                    next_readed_byte_count=r_readed_byte_count+1;
+                                    next_spi_master_din=READ_PATTERN;
+                                    next_spi_master_start_transfer=1;
+                                end
                         end
                 end
             TEAR_DOWN_TRANSACTION:
                 begin
                 next_state=IDLE;
+                next_csn=0;
+                next_finish=1;
                 end
             
         endcase
@@ -156,11 +168,10 @@ logic [7:0] r_readed_byte_count,next_readed_byte_count;
     
     
     
-    
     assign csn=r_csn;
     assign spi_master_din=r_spi_master_din;
     assign spi_master_start_transfer=r_spi_master_start_transfer;
     assign ready=r_ready;
-    
+    assign finish=r_finish;
     
 endmodule
