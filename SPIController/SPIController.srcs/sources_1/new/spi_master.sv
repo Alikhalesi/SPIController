@@ -134,7 +134,7 @@ output logic finished
                                     begin
                                   
                                         next_state=IDLE;
-                                        next_finish=0;
+                                        next_finish=1;
                                     end
                                 else
                                     begin

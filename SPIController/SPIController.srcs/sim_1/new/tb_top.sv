@@ -71,7 +71,7 @@ module tb_top(
     // Glue Logic & Interconnects (from your design)
     // ----------------------------------------------------
     assign instruction = READ_REGISTER;
-    assign addr        = 8'd0;
+    assign addr        = 8'h0F;
     assign write_enable = spi_master_finished && data_phase;
 
     // ----------------------------------------------------
@@ -156,14 +156,16 @@ module tb_top(
     initial begin
         // Initialize signals
         clk = 0;
-        synced_rst = 0;
+        synced_rst = 1;
         driver_start = 0;
         read_enable = 0;
         miso = 0;
 
         // 1. Reset Phase
         #(CLK_PERIOD * 10);
-        synced_rst = 1; // De-assert active-low reset
+        synced_rst = 0; // De-assert active-low reset
+        #(CLK_PERIOD * 5);
+synced_rst = 1; // De-assert active-low reset
         #(CLK_PERIOD * 5);
 
         // Wait for system to be completely ready
@@ -188,9 +190,10 @@ module tb_top(
         // 4. Verify FIFO Data Insertion
         if (!fifo_empty) begin
             $display("[TB SUCCESS] FIFO is not empty. Reading data from FIFO...");
+         
+            $display("[TB RESULT] Data read from FIFO: 8'h%h (Expected: 8'h%h)", fifo_read, mock_device_data);
             read_enable = 1; // Pop data out asynchronously
             #(CLK_PERIOD);
-            $display("[TB RESULT] Data read from FIFO: 8'h%h (Expected: 8'h%h)", fifo_read, mock_device_data);
             read_enable = 0;
         end else begin
             $display("[TB ERROR] Transaction finished but FIFO is empty! Data phase write failed.");

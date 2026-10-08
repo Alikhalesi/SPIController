@@ -104,7 +104,7 @@ logic  r_finish,next_finish;
     next_instruction=r_instruction;
     next_addr=r_addr;
     next_readed_byte_count=r_readed_byte_count;
-    next_finish=r_finish;
+    next_finish=0;
         case (r_state)
             IDLE:
                 begin
@@ -119,7 +119,6 @@ logic  r_finish,next_finish;
                         begin
                             next_ready=1;
                             next_readed_byte_count=0;
-                            next_finish=0;
                         end
                 end
             TEAR_UP_TRANSACTION:
