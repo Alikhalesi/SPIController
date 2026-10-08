@@ -155,6 +155,6 @@ output logic finished
     assign dout=r_dout;
     assign ready=r_ready;
     assign mosi=r_mosi;
-    assign sclk=r_sclk;
+      assign sclk=r_sclk;
     assign finished=r_finish;
 endmodule

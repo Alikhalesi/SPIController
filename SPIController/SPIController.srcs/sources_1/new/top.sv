@@ -23,10 +23,10 @@
 module top(
 input logic clk,
 input logic nrst,
-input logic miso,
-output logic mosi,
-output logic sclk,
-output logic csn,
+ (* mark_debug = "true" *) input logic miso,
+ (* mark_debug = "true" *) output logic mosi,
+ (* mark_debug = "true" *) output logic sclk,
+ (* mark_debug = "true" *) output logic csn,
 output logic[7:0] sseg_data,
 output logic[7:0] sseg_ctrl,
 input logic btn,
@@ -68,7 +68,7 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     logic [7:0] instruction;
     logic [7:0] addr;
     assign instruction=READ_REGISTER;
-    assign addr=8'd8;
+    assign addr=8'd0;
     
     assign write_enable=spi_master_finished && data_phase;
     
