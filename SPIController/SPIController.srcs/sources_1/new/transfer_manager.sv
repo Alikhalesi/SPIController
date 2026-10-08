@@ -123,11 +123,12 @@ logic  r_finish,next_finish;
                 end
             TEAR_UP_TRANSACTION:
                 begin
-                    next_csn=0;
+              
                     next_state=SEND_INSTRUCTION;
                 end
             SEND_INSTRUCTION:
                 begin
+                    next_csn=0;
                     next_spi_master_din=r_instruction;
                     next_spi_master_start_transfer=1;
                     next_state=SEND_ADDRESS;
