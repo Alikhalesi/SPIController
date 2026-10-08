@@ -161,7 +161,7 @@ logic  r_finish,next_finish;
             TEAR_DOWN_TRANSACTION:
                 begin
                 next_state=IDLE;
-                next_csn=0;
+                next_csn=1;
                 next_finish=1;
                 end
             
