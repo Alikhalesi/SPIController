@@ -71,7 +71,7 @@ module tb_top(
     // Glue Logic & Interconnects (from your design)
     // ----------------------------------------------------
     assign instruction = READ_REGISTER;
-    assign addr        = 8'h0F;
+    assign addr        = 8'hFF;
     assign write_enable = spi_master_finished && data_phase;
 
     // ----------------------------------------------------

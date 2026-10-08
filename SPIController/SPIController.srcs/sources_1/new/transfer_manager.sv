@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module adxl_driver #(localparam int READ_COUNT=1,localparam logic[7:0] READ_PATTERN=8'd1)
+module adxl_driver #(localparam int READ_COUNT=1,localparam logic[7:0] READ_PATTERN=8'd0)
 (
     input logic clk,
 input logic nrst,
@@ -135,6 +135,7 @@ logic  r_finish,next_finish;
                 end
             SEND_ADDRESS:
                 begin
+                 next_spi_master_start_transfer=0;
                   if (r_spi_master_finished)
                     begin
                         next_spi_master_din=r_addr;
@@ -144,6 +145,7 @@ logic  r_finish,next_finish;
                 end
             GET_DATA:
                 begin
+                 next_spi_master_start_transfer=0;
                     if (r_spi_master_finished)
                         begin
                            if(r_readed_byte_count==READ_COUNT)

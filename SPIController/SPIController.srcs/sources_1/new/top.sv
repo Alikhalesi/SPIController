@@ -68,7 +68,7 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     logic [7:0] instruction;
     logic [7:0] addr;
     assign instruction=READ_REGISTER;
-    assign addr=8'd0;
+    assign addr=8'd8;
     
     assign write_enable=spi_master_finished && data_phase;
     
@@ -97,7 +97,7 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
 .csn(csn),
 .spi_master_din(spi_master_din),
 .spi_master_start_transfer(spi_master_start_transfer),
-.start(driver_start),
+.start(btn_debounced),
 .ready(driver_ready),
 .instruction(instruction),
 .addr(addr),
