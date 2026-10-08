@@ -93,7 +93,7 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     .clk(clk),
 .nrst(synced_rst),
 .spi_master_ready(spi_master_ready),
-.spi_master_finished(spi_master_finished),
+  .spi_master_finished(spi_master_finished),
 .csn(csn),
 .spi_master_din(spi_master_din),
 .spi_master_start_transfer(spi_master_start_transfer),
@@ -121,7 +121,7 @@ sseg_mux seven_mux(.number( {8'b0,fifo_read} ),
 .nRst(synced_rst));
 
 
-    
+ assign led=  1; 
     
     
 endmodule

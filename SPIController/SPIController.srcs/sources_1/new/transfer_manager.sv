@@ -50,7 +50,7 @@ output logic data_phase
 
 state_t r_state,next_state;
 logic r_spi_master_ready,next_spi_master_ready;
-logic r_spi_master_finished,next_spi_master_finished;
+logic r_spi_master_finished;
 logic r_csn,next_csn;
 logic r_spi_master_start_transfer,next_spi_master_start_transfer;
 logic[7:0] r_spi_master_din,next_spi_master_din;
@@ -80,7 +80,7 @@ logic  r_finish,next_finish;
                 begin
                     r_state<=next_state;
                     r_spi_master_ready<=next_spi_master_ready;
-                    r_spi_master_finished<=next_spi_master_finished;
+                    r_spi_master_finished<=spi_master_finished;
                     r_csn<=next_csn;
                     r_spi_master_din<=next_spi_master_din;
                     r_spi_master_start_transfer<=next_spi_master_start_transfer;
@@ -97,15 +97,14 @@ logic  r_finish,next_finish;
     begin
     next_state=r_state;
     next_spi_master_ready=r_spi_master_ready;
-    next_spi_master_finished=r_spi_master_finished;
     next_csn=r_csn;
     next_spi_master_din=r_spi_master_din;
     next_spi_master_start_transfer=r_spi_master_start_transfer;
-    next_ready<=r_ready;
-    next_instruction<=r_instruction;
-    next_addr<=r_addr;
-    next_readed_byte_count<=r_readed_byte_count;
-    next_finish<=r_finish;
+    next_ready=r_ready;
+    next_instruction=r_instruction;
+    next_addr=r_addr;
+    next_readed_byte_count=r_readed_byte_count;
+    next_finish=r_finish;
         case (r_state)
             IDLE:
                 begin
@@ -118,7 +117,7 @@ logic  r_finish,next_finish;
                         end
                     else
                         begin
-                            next_ready=0;
+                            next_ready=1;
                             next_readed_byte_count=0;
                             next_finish=0;
                         end
