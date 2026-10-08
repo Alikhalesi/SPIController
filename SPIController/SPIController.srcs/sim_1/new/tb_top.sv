@@ -23,118 +23,182 @@
 module tb_top(
 
     );
-  // =========================================================================
-    // 1. Clock & Interface Signals
-    // =========================================================================
-    logic clk;
-    logic nrst;
-    logic miso;
-    
-    logic mosi;
-    logic sclk;
-    logic csn;
-    logic [7:0] sseg_data;
-    logic [7:0] sseg_ctrl;
-    logic btn;
-    logic led;
+      // ----------------------------------------------------
+    // Parameters
+    // ----------------------------------------------------
+    parameter CLK_PERIOD = 10; // 10ns for 100MHz clock
+    parameter [7:0] READ_REGISTER = 8'h0B; // Example instruction opcode
 
-    // =========================================================================
-    // 2. Unit Under Test (UUT) Instantiation
-    // =========================================================================
-    top uut (
+    // ----------------------------------------------------
+    // Testbench Wires & Regs
+    // ----------------------------------------------------
+    logic clk;
+    logic synced_rst;
+    
+    // SPI Physical Interface
+    logic sclk;
+    logic mosi;
+    logic miso;
+    logic csn;
+
+    // FIFO Interface
+    logic read_enable;
+    logic write_enable;
+    logic [7:0] fifo_read;
+    logic [7:0] fifo_write;
+    logic fifo_empty;
+    logic fifo_full;
+
+    // SPI Master Internal Controls
+    logic spi_master_ready;
+    logic spi_master_finished;
+    logic [7:0] spi_master_din;
+    logic spi_master_start_transfer;
+    logic data_phase;
+
+    // Driver Controls
+    logic driver_start;
+    logic driver_ready;
+    logic driver_finished;
+    logic [7:0] instruction;
+    logic [7:0] addr;
+
+    // Mock Device Variables
+    logic [7:0] mock_device_data = 8'hA5; // Data the sensor will return
+    int bit_count = 0;
+
+    // ----------------------------------------------------
+    // Glue Logic & Interconnects (from your design)
+    // ----------------------------------------------------
+    assign instruction = READ_REGISTER;
+    assign addr        = 8'd0;
+    assign write_enable = spi_master_finished && data_phase;
+
+    // ----------------------------------------------------
+    // DUT Instances
+    // ----------------------------------------------------
+    fifo #(.DATA_WIDTH(8)) fifo_instance (
         .clk(clk),
-        .nrst(nrst),
-        .miso(miso),
-        .mosi(mosi),
-        .sclk(sclk),
-        .csn(csn),
-        .sseg_data(sseg_data),
-        .sseg_ctrl(sseg_ctrl),
-        .btn(btn),
-        .led(led)
+        .nrst(synced_rst),
+        .w_en(write_enable),
+        .r_en(read_enable),
+        .r_data(fifo_read),
+        .w_data(fifo_write),
+        .empty(fifo_empty),
+        .full(fifo_full)
     );
 
-    // =========================================================================
-    // 3. Clock Generation (100 MHz)
-    // =========================================================================
-    always begin
-        #5 clk = ~clk; 
-    end
+    spi_master master (
+        .clk(clk),
+        .nrst(synced_rst),
+        .sclk(sclk),
+        .mosi(mosi),
+        .ready(spi_master_ready),
+        .miso(miso),
+        .start(spi_master_start_transfer),
+        .din(spi_master_din),
+        .dout(fifo_write),
+        .finished(spi_master_finished)
+    );
 
-    // =========================================================================
-    // 4. Mock SPI Peripheral Model (Strict CPOL=0, CPHA=0 Mode)
-    // =========================================================================
-    logic [7:0] mock_device_reg = 8'hA5; // Data the master will read
-    logic [2:0] miso_bit_cnt;
+    adxl_driver driver (
+        .clk(clk),
+        .nrst(synced_rst),
+        .spi_master_ready(spi_master_ready),
+        .spi_master_finished(spi_master_finished),
+        .csn(csn),
+        .spi_master_din(spi_master_din),
+        .spi_master_start_transfer(spi_master_start_transfer),
+        .start(driver_start),
+        .ready(driver_ready),
+        .instruction(instruction),
+        .addr(addr),
+        .finish(driver_finished),
+        .data_phase(data_phase)
+    );
 
-    // Mode 0 requires combinatorial drive or instant driving on CSN falling edge
-    always_comb begin
+    // ----------------------------------------------------
+    // Clock Generation (100MHz)
+    // ----------------------------------------------------
+    always #(CLK_PERIOD/2) clk = ~clk;
+
+    // ----------------------------------------------------
+    // Behavioral Model of External SPI Slave (CPOL=0, CPHA=0)
+    // ----------------------------------------------------
+    // For Mode 0: Data is launched by the slave on SCLK falling edge 
+    // and sampled by the master on SCLK rising edge.
+    always @(negedBySclkOrCsn) begin
         if (csn) begin
-            miso = 1'b0;
+            miso <= 1'b0;
+            bit_count <= 0;
         end else begin
-            miso = mock_device_reg[miso_bit_cnt];
+            // Drive MISO bit-by-bit MSB first on falling edges of sclk
+            // Note: In a true driver sequence, the sensor only returns data during the data phase
+            miso <= mock_device_data[7 - (bit_count % 8)];
         end
     end
 
-    // Manage the bit pointer tracking
-    always_ff @(negedge sclk or posedge csn) begin
+    // Increment bit tracking on rising edge of sclk (sampling edge)
+    always @(posedge sclk or posedge csn) begin
         if (csn) begin
-            miso_bit_cnt <= 3'd7; // Reset index to the MSB
+            bit_count <= 0;
         end else begin
-            if (miso_bit_cnt > 0)
-                miso_bit_cnt <= miso_bit_cnt - 1'b1;
-            else
-                miso_bit_cnt <= 3'd7; // Roll over for next byte if multi-byte
+            bit_count <= bit_count + 1;
         end
     end
 
-    // =========================================================================
-    // 5. MOSI Protocol Monitor (CPOL=0, CPHA=0 samples on RISING edge)
-    // =========================================================================
-    logic [7:0] captured_mosi_byte;
-    logic [2:0] mosi_bit_cnt = 3'd7;
+    // Helper macro logic to handle clean clocking triggers
+    wire negedBySclkOrCsn = sclk || csn;
 
-    always_ff @(posedge sclk or posedge csn) begin
-        if (csn) begin
-            mosi_bit_cnt <= 3'd7;
-        end else begin
-            captured_mosi_byte[mosi_bit_cnt] <= mosi;
-            if (mosi_bit_cnt == 0) begin
-                $display("[TB INFO] @ %0t ns | SPI Master Sent: 8'h%h", $time, captured_mosi_byte);
-                mosi_bit_cnt <= 3'd7;
-            end 
-            else begin
-                mosi_bit_cnt <= mosi_bit_cnt - 1'b1;
-            end
-        end
-    end
-
-    // =========================================================================
-    // 6. Test Stimulus Flow
-    // =========================================================================
+    // ----------------------------------------------------
+    // Test Vector Sequence
+    // ----------------------------------------------------
     initial begin
-        clk  = 0;
-        nrst = 1;
-        btn  = 0;
+        // Initialize signals
+        clk = 0;
+        synced_rst = 0;
+        driver_start = 0;
+        read_enable = 0;
+        miso = 0;
 
-        #40;
-        nrst = 0;
-        #40;
-        nrst=1;
-        #40;
+        // 1. Reset Phase
+        #(CLK_PERIOD * 10);
+        synced_rst = 1; // De-assert active-low reset
+        #(CLK_PERIOD * 5);
 
-        // Trigger transaction
-        @(posedge clk);
-        btn = 1;
-        
-        repeat (5) @(posedge clk);
-        btn = 0;
+        // Wait for system to be completely ready
+        wait(driver_ready && spi_master_ready);
+        #(CLK_PERIOD);
 
-        // Wait for implementation completion
-        wait(led == 1);
-        $display("[TB SUCCESS] SPI Mode 0 Transaction Finished Successfully!");
-        
-        #200;
+        $display("[TB INFO] Starting ADXL Driver Read Operation...");
+
+        // 2. Trigger Driver Transaction
+        driver_start = 1;
+        #(CLK_PERIOD);
+        driver_start = 0;
+
+        // 3. Monitor Transaction Progress
+        // Wait for driver to finish executing its state machine
+        wait(driver_finished);
+        $display("[TB INFO] Driver transaction completed!");
+
+        // Give a few buffer cycles for the FIFO to settle
+        #(CLK_PERIOD * 5);
+
+        // 4. Verify FIFO Data Insertion
+        if (!fifo_empty) begin
+            $display("[TB SUCCESS] FIFO is not empty. Reading data from FIFO...");
+            read_enable = 1; // Pop data out asynchronously
+            #(CLK_PERIOD);
+            $display("[TB RESULT] Data read from FIFO: 8'h%h (Expected: 8'h%h)", fifo_read, mock_device_data);
+            read_enable = 0;
+        end else begin
+            $display("[TB ERROR] Transaction finished but FIFO is empty! Data phase write failed.");
+        end
+
+        // Finish simulation
+        #(CLK_PERIOD * 20);
+        $display("[TB INFO] Simulation finished cleanly.");
         $finish;
     end
 endmodule

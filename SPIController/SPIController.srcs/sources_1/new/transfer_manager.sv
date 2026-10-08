@@ -33,7 +33,8 @@ input logic start,
 output logic ready,
 input logic [7:0] instruction,
 input logic [7:0] addr,
-output logic finish
+output logic finish,
+output logic data_phase
     );
     
       
@@ -173,5 +174,5 @@ logic  r_finish,next_finish;
     assign spi_master_start_transfer=r_spi_master_start_transfer;
     assign ready=r_ready;
     assign finish=r_finish;
-    
+    assign data_phase=r_state==GET_DATA && r_readed_byte_count!=0;
 endmodule

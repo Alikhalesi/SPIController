@@ -41,7 +41,12 @@ output logic led
     logic synced_rst;
     reset_synchronizer rst_synchronizer(.nrst(nrst),.clk(clk),.sync_nrst(synced_rst));
     
-  logic write_enable;
+        logic btn_debounced;
+debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
+    
+    
+    
+
     logic read_enable;// read operation is asynchronous, this signal just pop the data from FIFO.
     
     logic transmit_finished;
@@ -50,16 +55,26 @@ output logic led
     logic[7:0] fifo_write;
     logic fifo_empty;
     logic fifo_full;
-    fifo  #(.DATA_WIDTH(8)) fifo_instance
-    (.clk(clk),.nrst(synced_rst),.w_en(write_enable),.r_en(read_enable),.r_data(fifo_read),.w_data(fifo_write),.empty(fifo_empty),.full(fifo_full));
-    
-    
-
-    
     logic spi_master_ready;
     logic spi_master_finished;
     logic [7:0] spi_master_din;
     logic spi_master_start_transfer;
+    logic data_phase;
+    
+    //driver
+     logic driver_start;
+    logic driver_ready;
+    logic driver_finished;
+    logic [7:0] instruction;
+    logic [7:0] addr;
+    assign instruction=READ_REGISTER;
+    assign addr=8'd0;
+    
+    assign write_enable=spi_master_finished && data_phase;
+    
+    fifo  #(.DATA_WIDTH(8)) fifo_instance
+    (.clk(clk),.nrst(synced_rst),.w_en(write_enable),.r_en(read_enable),.r_data(fifo_read),.w_data(fifo_write),.empty(fifo_empty),.full(fifo_full));
+    
   spi_master master(
  .clk(clk),
  .nrst(synced_rst),
@@ -73,14 +88,6 @@ output logic led
 .finished(spi_master_finished)
 );
 
-    logic driver_start;
-    logic driver_ready;
-    logic driver_finished;
-    logic [7:0] instruction;
-    logic [7:0] addr;
-    assign instruction=READ_REGISTER;
-    assign addr=8'd0;
-    
   adxl_driver driver
 (
     .clk(clk),
@@ -94,7 +101,8 @@ output logic led
 .ready(driver_ready),
 .instruction(instruction),
 .addr(addr),
-.finish(driver_finished)
+.finish(driver_finished),
+.data_phase(data_phase)
     );
   
  
