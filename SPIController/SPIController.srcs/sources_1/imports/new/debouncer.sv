@@ -1,6 +1,6 @@
 module debouncer #(
     parameter int N = 1,
-    parameter int STABLE = 1_000_000
+    parameter int STABLE = 15_000_000
 )(
     input  logic [N-1:0] d,
     output logic [N-1:0] q,
