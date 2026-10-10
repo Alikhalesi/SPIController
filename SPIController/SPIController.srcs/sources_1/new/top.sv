@@ -92,7 +92,7 @@ debouncer btnr_debouncer(.d(btnr),.q(btnr_debounced),.clk(clk),.nrst(synced_rst)
      logic [7:0] r_addr,next_addr;
      logic [7:0] r_write_data,next_write_data;
      logic r_transaction_type,next_transaction_type;
-     logic [7:0] r_counter,next_counter;
+     logic [31:0] r_counter,next_counter;
     //
     
     
@@ -140,7 +140,7 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
     );
 
 
- assign led= fifo_full; 
+
     
     //this code is temporary replacement of software code ,
     typedef enum logic [4:0] {IDLE=4'd0,RESET_AXL=4'd2,SET_MEASURE_MODE=4'd3,READ_TEMPS=4'd4} state;
@@ -162,7 +162,7 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                 begin
                     r_state<=next_state;
                     r_start_transaction<=next_start_transaction;
-                    r_instruction<=next_start_transaction;
+                    r_instruction<=next_instruction;
                     r_addr<=next_addr;
                     r_write_data<=next_write_data;
                     r_transaction_type<=next_transaction_type;
@@ -195,20 +195,23 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                           next_write_data=8'h52;
                           next_transaction_type=0;  
                           next_start_transaction=1;
+                          next_state=SET_MEASURE_MODE;
+                          next_counter=0;
                     end
                 SET_MEASURE_MODE:
                     begin
                          next_start_transaction=0;
-                         if(driver_finished)
+                         if(driver_ready)
                             begin
-                               if (r_counter==1000_000)
+                               if (r_counter==32'd30_000_000)
                                 begin
                                      next_instruction=WRITE_REGISTER;
-                                     next_addr=8'h2D;
+                                     next_addr=8'h2d;
                                      next_write_data=8'h02;
                                      next_transaction_type=0;
                                      next_start_transaction=1;
                                      next_state=READ_TEMPS;
+                                     next_counter=0;
                                 end
                             else
                                 begin
@@ -224,19 +227,21 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                     READ_TEMPS:
                         begin
                           next_start_transaction=0;
-                            if(driver_finished)
-                                begin
-                                     next_instruction=READ_REGISTER;
-                                     next_addr=8'h14;
-                                     next_transaction_type=1;
-                                     next_start_transaction=1;
-                                     next_state=IDLE;
-                                end
-                          
+                            if(driver_ready)
+                                 if (r_counter==32'd30_000_000)
+                                    begin
+                                         next_instruction=READ_REGISTER;
+                                         next_addr=8'h2d;
+                                         next_transaction_type=1;
+                                         next_start_transaction=1;
+                                         next_state=IDLE;
+                                    end
+                                 else
+                                 next_counter=r_counter+1;   
                         end
                     
             endcase
         end
     
-    
+     assign led= r_state==IDLE; 
 endmodule
