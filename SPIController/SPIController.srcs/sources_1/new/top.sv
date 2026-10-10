@@ -48,7 +48,7 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
      delay_signal btn_delay(.clk(clk),.nrst(nrst),.d(btn_debounced),.q(btn_delayed));
     
 
-    logic read_enable;// read operation is asynchronous, this signal just pop the data from FIFO.
+
     
     logic transmit_finished;
     
@@ -72,7 +72,8 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     assign addr=8'd0;
     
     assign write_enable=spi_master_finished && data_phase;
-    
+    logic read_enable= (!fifo_empty) && spi_master_start_transfer;// read operation is asynchronous, this signal just pop the data from FIFO.
+        
     fifo  #(.DATA_WIDTH(8)) fifo_instance
     (.clk(clk),.nrst(synced_rst),.w_en(write_enable),.r_en(read_enable),.r_data(fifo_read),.w_data(fifo_write),.empty(fifo_empty),.full(fifo_full));
     
