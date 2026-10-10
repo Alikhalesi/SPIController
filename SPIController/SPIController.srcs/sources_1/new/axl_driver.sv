@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module adxl_driver #(localparam int READ_COUNT=1,localparam logic[7:0] READ_PATTERN=8'd0)
+module adxl_driver #(localparam int READ_COUNT=2,localparam int WRITE_COUNT=2,localparam logic[7:0] READ_PATTERN=8'd0)
 (
     input logic clk,
 input logic nrst,
@@ -34,7 +34,9 @@ output logic ready,
 input logic [7:0] instruction,
 input logic [7:0] addr,
 output logic finish,
-output logic data_phase
+output logic data_phase,
+input logic transaction_type,
+output logic[7:0] write_data
     );
     
       
@@ -45,7 +47,8 @@ output logic data_phase
     SEND_INSTRUCTION=4'd2,
     SEND_ADDRESS=4'd3,
     GET_DATA=4'd4,
-    TEAR_DOWN_TRANSACTION=4'd5
+    SET_DATA=4'd5,
+    TEAR_DOWN_TRANSACTION=4'd6
 } state_t;
 
 state_t r_state,next_state;
@@ -57,7 +60,7 @@ logic[7:0] r_spi_master_din,next_spi_master_din;
 logic r_ready,next_ready;
 logic[7:0] r_instruction,next_instruction;
 logic[7:0] r_addr,next_addr;
-logic [7:0] r_readed_byte_count,next_readed_byte_count;
+logic [7:0] r_transfered_byte_count,next_transfered_byte_count;
 logic  r_finish,next_finish;
     
     always_ff @(posedge clk, negedge nrst)
@@ -73,7 +76,7 @@ logic  r_finish,next_finish;
                     r_ready<=0;
                     r_instruction<=0;
                     r_addr<=0;
-                    r_readed_byte_count<=0;
+                    r_transfered_byte_count<=0;
                     r_finish<=0;
                 end
              else
@@ -87,7 +90,7 @@ logic  r_finish,next_finish;
                     r_ready<=next_ready;
                     r_instruction<=next_instruction;
                     r_addr<=next_addr;
-                    r_readed_byte_count<=next_readed_byte_count;
+                    r_transfered_byte_count<=next_transfered_byte_count;
                     r_finish<=next_finish;
                 end
         end 
@@ -103,12 +106,12 @@ logic  r_finish,next_finish;
     next_ready=r_ready;
     next_instruction=r_instruction;
     next_addr=r_addr;
-    next_readed_byte_count=r_readed_byte_count;
+    next_transfered_byte_count=r_transfered_byte_count;
     next_finish=0;
         case (r_state)
             IDLE:
                 begin
-                next_readed_byte_count=0;
+                next_transfered_byte_count=0;
                     if(start && spi_master_ready)
                         begin
                             next_instruction=instruction;
@@ -123,8 +126,7 @@ logic  r_finish,next_finish;
                 end
             TEAR_UP_TRANSACTION:
                 begin
-              
-                    next_state=SEND_INSTRUCTION;
+                     next_state=SEND_INSTRUCTION;
                 end
             SEND_INSTRUCTION:
                 begin
@@ -140,19 +142,37 @@ logic  r_finish,next_finish;
                     begin
                         next_spi_master_din=r_addr;
                         next_spi_master_start_transfer=1;
-                        next_state=GET_DATA;
+                            if (transaction_type)
+                                next_state=GET_DATA;
+                            else
+                                next_state=SET_DATA;
                     end
+                end
+            SET_DATA:
+                begin
+                    next_spi_master_start_transfer=0;
+                    if (r_spi_master_finished)
+                        begin
+                           if(r_transfered_byte_count==WRITE_COUNT)
+                                next_state=TEAR_DOWN_TRANSACTION;
+                           else
+                                begin
+                                    next_transfered_byte_count=r_transfered_byte_count+1;
+                                    next_spi_master_din=write_data;
+                                    next_spi_master_start_transfer=1;
+                                end
+                        end
                 end
             GET_DATA:
                 begin
                  next_spi_master_start_transfer=0;
                     if (r_spi_master_finished)
                         begin
-                           if(r_readed_byte_count==READ_COUNT)
+                           if(r_transfered_byte_count==READ_COUNT)
                                 next_state=TEAR_DOWN_TRANSACTION;
                            else
                                 begin
-                                    next_readed_byte_count=r_readed_byte_count+1;
+                                    next_transfered_byte_count=r_transfered_byte_count+1;
                                     next_spi_master_din=READ_PATTERN;
                                     next_spi_master_start_transfer=1;
                                 end

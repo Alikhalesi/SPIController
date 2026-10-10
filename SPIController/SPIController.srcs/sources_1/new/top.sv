@@ -73,19 +73,17 @@ debouncer btnr_debouncer(.d(btnr),.q(btnr_debounced),.clk(clk),.nrst(synced_rst)
     logic driver_finished;
     logic [7:0] instruction;
     logic [7:0] addr;
+    logic [7:0] spi_write_data;
+    logic spi_transaction_type;
+    assign spi_transaction_type=0;
     assign instruction=READ_REGISTER;
-    assign addr=8'd0;
+    assign addr=8'h0;
     
     assign write_enable=spi_master_finished && data_phase;
     logic read_enable= (!fifo_empty) && btnr_delayed;// read operation is asynchronous, this signal just pop the data from FIFO.
     logic fifo_top_updated;    
     fifo  #(.DATA_WIDTH(8)) fifo_instance
     (.clk(clk),.nrst(synced_rst),.w_en(write_enable),.r_en(read_enable),.r_data(fifo_read),.w_data(fifo_write),.empty(fifo_empty),.full(fifo_full),.top_updated(fifo_top_updated));
-    
-    
-    
-    
-    
     
     
   spi_master master(
@@ -115,7 +113,9 @@ debouncer btnr_debouncer(.d(btnr),.q(btnr_debounced),.clk(clk),.nrst(synced_rst)
 .instruction(instruction),
 .addr(addr),
 .finish(driver_finished),
-.data_phase(data_phase)
+.data_phase(data_phase),
+.transaction_type(spi_transaction_type),
+.write_data(spi_write_data)
     );
   
  
