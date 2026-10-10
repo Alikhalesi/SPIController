@@ -62,6 +62,7 @@ logic[7:0] r_instruction,next_instruction;
 logic[7:0] r_addr,next_addr;
 logic [7:0] r_transfered_byte_count,next_transfered_byte_count;
 logic  r_finish,next_finish;
+logic  r_transaction_type,next_transaction_type;
     
     always_ff @(posedge clk, negedge nrst)
         begin
@@ -78,6 +79,7 @@ logic  r_finish,next_finish;
                     r_addr<=0;
                     r_transfered_byte_count<=0;
                     r_finish<=0;
+                    r_transaction_type<=0;
                 end
              else
                 begin
@@ -92,6 +94,7 @@ logic  r_finish,next_finish;
                     r_addr<=next_addr;
                     r_transfered_byte_count<=next_transfered_byte_count;
                     r_finish<=next_finish;
+                    r_transaction_type<=next_transaction_type;
                 end
         end 
     
@@ -108,6 +111,7 @@ logic  r_finish,next_finish;
     next_addr=r_addr;
     next_transfered_byte_count=r_transfered_byte_count;
     next_finish=0;
+    next_transaction_type=r_transaction_type;
         case (r_state)
             IDLE:
                 begin
@@ -116,6 +120,7 @@ logic  r_finish,next_finish;
                         begin
                             next_instruction=instruction;
                             next_addr=addr;
+                            next_transaction_type=transaction_type;
                             next_ready=0;
                             next_state=TEAR_UP_TRANSACTION;
                         end
@@ -142,7 +147,7 @@ logic  r_finish,next_finish;
                     begin
                         next_spi_master_din=r_addr;
                         next_spi_master_start_transfer=1;
-                            if (transaction_type)
+                            if (r_transaction_type)
                                 next_state=GET_DATA;
                             else
                                 next_state=SET_DATA;
@@ -195,5 +200,5 @@ logic  r_finish,next_finish;
     assign spi_master_start_transfer=r_spi_master_start_transfer;
     assign ready=r_ready;
     assign finish=r_finish;
-    assign data_phase=r_state==GET_DATA && r_readed_byte_count!=0;
+    assign data_phase=r_state==GET_DATA && r_transfered_byte_count!=0;
 endmodule
