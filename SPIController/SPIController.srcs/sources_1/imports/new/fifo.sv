@@ -88,7 +88,7 @@ always_comb
                      next_empty_reg=0;
                     if(next_w_pointer==r_pointer)
                     next_full_reg=1;
-                    if(next_w_pointer==0)
+                    if(next_w_pointer==1)
                     next_top_updated=1;
                 end
     end    

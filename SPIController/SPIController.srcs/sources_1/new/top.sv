@@ -123,7 +123,7 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
         .nrst(synced_rst),
         .fifo_empy(fifo_empty),
         .fifo_full(fifo_full),
-        .fifo_top({8'd174}),
+        .fifo_top(fifo_read),
         .fifo_updated(fifo_top_updated),
          .sseg_data(sseg_data),
 .sseg_ctrl(sseg_ctrl)
