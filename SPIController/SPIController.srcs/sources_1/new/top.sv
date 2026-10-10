@@ -23,10 +23,10 @@
 module top(
 input logic clk,
 input logic nrst,
- (* mark_debug = "true" *) input logic miso,
- (* mark_debug = "true" *) output logic mosi,
- (* mark_debug = "true" *) output logic sclk,
- (* mark_debug = "true" *) output logic csn,
+ input logic miso,
+output logic mosi,
+ output logic sclk,
+output logic csn,
 output logic[7:0] sseg_data,
 output logic[7:0] sseg_ctrl,
 input logic btn,
@@ -44,7 +44,8 @@ output logic led
         logic btn_debounced;
 debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     
-    
+    logic btn_delayed;
+     delay_signal btn_delay(.clk(clk),.nrst(nrst),.d(btn_debounced),.q(btn_delayed));
     
 
     logic read_enable;// read operation is asynchronous, this signal just pop the data from FIFO.
@@ -97,7 +98,7 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
 .csn(csn),
 .spi_master_din(spi_master_din),
 .spi_master_start_transfer(spi_master_start_transfer),
-.start(btn_debounced),
+.start(btn_delayed),
 .ready(driver_ready),
 .instruction(instruction),
 .addr(addr),
@@ -121,7 +122,7 @@ sseg_mux seven_mux(.number( {8'b0,fifo_read} ),
 .nRst(synced_rst));
 
 
- assign led=  1; 
+ assign led= fifo_full; 
     
     
 endmodule
