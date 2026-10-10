@@ -56,7 +56,7 @@ input logic nRst
     localparam RENDERING_TIME=28'd000_100_000;
     
     binary_to_decimal_16bit bintodec(.clk(clk),.rst_n(nRst),.start(start_binary_decoding),
-    .binary_in(registered_number),.bcd_out(dec_value),.ready(binary_decode_finished));
+    .binary_in({2'b00,registered_number[13:0]}),.bcd_out(dec_value),.ready(binary_decode_finished));
 
 
     logic [27:0] delay;
@@ -147,23 +147,89 @@ input logic nRst
   
     2'b01:
         begin
-            current_value=dec_value[7:4];
-            ctrl=4'b1101;
+         ctrl=4'b1101;
+            if(number[9:8]==2'b00)
+                begin
+                 current_value=dec_value[7:4];
+                
+                end
+            else if (number[9:8]==2'b01)
+                begin
+                //empty
+                   current_value=4'b1110;
+                end 
+             else if (number[9:8]==2'b11)
+                begin
+                //full
+                   current_value= 4'b1111;
+                end 
+             else 
+                current_value=4'b1010;
         end
     2'b10:
         begin 
-            current_value=dec_value[11:8];
             ctrl=4'b1011;
+            
+             if(number[9:8]==2'b00)
+                begin
+                 current_value=dec_value[11:8];
+                
+                end
+            else if (number[9:8]==2'b01)
+                begin
+                //empty
+                   current_value=4'b1110;
+                end 
+             else if (number[9:8]==2'b11)
+                begin
+                //full
+                   current_value= 4'b1111;
+                end 
+            else 
+                current_value=4'b1010;
         end
     2'b11: 
         begin
-            current_value=dec_value[15:12];
                 ctrl=4'b0111;
+            if(number[9:8]==2'b00)
+                begin
+                 current_value=dec_value[15:12];
+                
+                end
+            else if (number[9:8]==2'b01)
+                begin
+                //empty
+                   current_value=4'b1110;
+                end 
+             else if (number[9:8]==2'b11)
+                begin
+                //full
+                   current_value= 4'b1111;
+                end 
+              else 
+                current_value=4'b1010;  
+                
         end
     default:  
         begin
-            current_value=dec_value[3:0];
             ctrl=4'b1110;
+             if(number[9:8]==2'b00)
+                begin
+                 current_value=dec_value[3:0];
+                
+                end
+            else if (number[9:8]==2'b01)
+                begin
+                //empty
+                   current_value=4'b1110;
+                end 
+             else if (number[9:8]==2'b11)
+                begin
+                //full
+                   current_value= 4'b1111;
+                end 
+              else 
+                current_value=4'b1010;
         end
     endcase
 

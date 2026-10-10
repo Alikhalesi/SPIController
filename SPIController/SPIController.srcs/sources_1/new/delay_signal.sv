@@ -25,7 +25,7 @@ module delay_signal
 input logic clk,
 input logic nrst,
 input logic d,
-input logic q
+output logic q
     );
     
     typedef enum logic [1:0] {IDLE=2'd0,HIGH=2'd1,NOTIFY=2'd2} state;

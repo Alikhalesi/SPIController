@@ -30,6 +30,7 @@ output logic csn,
 output logic[7:0] sseg_data,
 output logic[7:0] sseg_ctrl,
 input logic btn,
+input logic btnr,
 output logic led
 
     );
@@ -47,7 +48,11 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     logic btn_delayed;
      delay_signal btn_delay(.clk(clk),.nrst(nrst),.d(btn_debounced),.q(btn_delayed));
     
-
+        logic btnr_debounced;
+debouncer btnr_debouncer(.d(btnr),.q(btnr_debounced),.clk(clk),.nrst(synced_rst));
+    
+    logic btnr_delayed;
+     delay_signal btnr_delay(.clk(clk),.nrst(nrst),.d(btnr_debounced),.q(btnr_delayed));
 
     
     logic transmit_finished;
@@ -72,10 +77,16 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     assign addr=8'd0;
     
     assign write_enable=spi_master_finished && data_phase;
-    logic read_enable= (!fifo_empty) && spi_master_start_transfer;// read operation is asynchronous, this signal just pop the data from FIFO.
-        
+    logic read_enable= (!fifo_empty) && btnr_delayed;// read operation is asynchronous, this signal just pop the data from FIFO.
+    logic fifo_top_updated;    
     fifo  #(.DATA_WIDTH(8)) fifo_instance
-    (.clk(clk),.nrst(synced_rst),.w_en(write_enable),.r_en(read_enable),.r_data(fifo_read),.w_data(fifo_write),.empty(fifo_empty),.full(fifo_full));
+    (.clk(clk),.nrst(synced_rst),.w_en(write_enable),.r_en(read_enable),.r_data(fifo_read),.w_data(fifo_write),.empty(fifo_empty),.full(fifo_full),.top_updated(fifo_top_updated));
+    
+    
+    
+    
+    
+    
     
   spi_master master(
  .clk(clk),
@@ -108,19 +119,15 @@ debouncer btn_debouncer(.d(btn),.q(btn_debounced),.clk(clk),.nrst(synced_rst));
     );
   
  
-logic[3:0] hard_sseg_ctrl=4'b1111;
-assign sseg_ctrl[7:4]=hard_sseg_ctrl;
- assign start_signal= driver_finished;
- logic finished_signal;
-
-
-sseg_mux seven_mux(.number( {8'b0,fifo_read} ),
-.ctrl(sseg_ctrl[3:0]),
-.data(sseg_data),
-.start_signal(start_signal),
-.finished_signal(finished_signal),
-.clk(clk),
-.nRst(synced_rst));
+acc_subscriber seven_seg_subscriber(.clk(clk),
+        .nrst(synced_rst),
+        .fifo_empy(fifo_empty),
+        .fifo_full(fifo_full),
+        .fifo_top({8'd174}),
+        .fifo_updated(fifo_top_updated),
+         .sseg_data(sseg_data),
+.sseg_ctrl(sseg_ctrl)
+    );
 
 
  assign led= fifo_full; 

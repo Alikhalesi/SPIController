@@ -51,7 +51,7 @@ output SSEG_NUM segments
 
     always_comb begin
         // Using a dynamic ternary tree forces literal multiplexer logic
-        temp_seg = (number == 4'b0000) ? ZERO  :
+     temp_seg = (number == 4'b0000) ? ZERO  :
                    (number == 4'b0001) ? ONE   :
                    (number == 4'b0010) ? TWO   :
                    (number == 4'b0011) ? THREE :
@@ -60,7 +60,13 @@ output SSEG_NUM segments
                    (number == 4'b0110) ? SIX   :
                    (number == 4'b0111) ? SEVEN :
                    (number == 4'b1000) ? EIGHT :
-                   (number == 4'b1001) ? NINE  : SSEG_NUM'('x);
+                   (number == 4'b1001) ? NINE  : 
+                   (number == 4'b1010) ? A     :
+                   (number == 4'b1011) ? B     : // Often displayed as lowercase 'b'
+                   (number == 4'b1100) ? C     :
+                   (number == 4'b1101) ? D     : // Often displayed as lowercase 'd'
+                   (number == 4'b1110) ? E     :
+                   (number == 4'b1111) ? F     : SSEG_NUM'('x);
                    
         segments = temp_seg;
 

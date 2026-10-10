@@ -108,7 +108,7 @@ logic  r_finish,next_finish;
         case (r_state)
             IDLE:
                 begin
-                next_readed_byte_count=0;
+              //  next_readed_byte_count=0;
                     if(start && spi_master_ready)
                         begin
                             next_instruction=instruction;
