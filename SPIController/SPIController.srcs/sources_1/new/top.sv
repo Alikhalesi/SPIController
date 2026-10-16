@@ -143,7 +143,7 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
 
     
     //this code is temporary replacement of software code ,
-    typedef enum logic [4:0] {IDLE=4'd0,RESET_AXL=4'd2,SET_MEASURE_MODE=4'd3,READ_TEMPS=4'd4} state;
+    typedef enum logic [4:0] {IDLE=4'd0,RESET_AXL=4'd2,SET_MEASURE_MODE=4'd3,READ_TEMPS=4'd4,READ_TEMPS_1=4'd5} state;
     state r_state,next_state;
 
     always_ff @(posedge clk,negedge synced_rst)
@@ -186,6 +186,7 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                         if(btn_delayed)
                             begin
                                 next_state=RESET_AXL;
+                                next_counter=0;
                             end
                     end
                 RESET_AXL:
@@ -196,27 +197,27 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                           next_transaction_type=0;  
                           next_start_transaction=1;
                           next_state=SET_MEASURE_MODE;
-                          next_counter=0;
                     end
                 SET_MEASURE_MODE:
                     begin
                          next_start_transaction=0;
                          if(driver_ready)
                             begin
-                               if (r_counter==32'd30_000_000)
+                              if (r_counter==32'd3_000_000)
                                 begin
                                      next_instruction=WRITE_REGISTER;
                                      next_addr=8'h2d;
-                                     next_write_data=8'h02;
+                                     next_write_data=8'b00001010;
                                      next_transaction_type=0;
                                      next_start_transaction=1;
                                      next_state=READ_TEMPS;
                                      next_counter=0;
                                 end
+                                
                             else
                                 begin
                                     next_counter=r_counter+1;
-                                end
+                               end
                         
                             end
                          else
@@ -228,17 +229,39 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                         begin
                           next_start_transaction=0;
                             if(driver_ready)
-                                 if (r_counter==32'd30_000_000)
+                             if (r_counter==32'd3_000_000)
+                                
+                                    begin
+                                         next_instruction=READ_REGISTER;
+                                         next_addr=8'h14;
+                                         next_transaction_type=1;
+                                         next_start_transaction=1;
+                                         next_state=READ_TEMPS_1;
+                                          next_counter=0;
+                                    end
+                                             else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        end
+                    READ_TEMPS_1:
+                    begin
+                         next_start_transaction=0;
+                            if(driver_ready)
+                            if (r_counter==32'd3_000_000)
                                     begin
                                          next_instruction=READ_REGISTER;
                                          next_addr=8'h2d;
                                          next_transaction_type=1;
                                          next_start_transaction=1;
                                          next_state=IDLE;
+                                          next_counter=0;
                                     end
                                  else
-                                 next_counter=r_counter+1;   
-                        end
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                    end
                     
             endcase
         end

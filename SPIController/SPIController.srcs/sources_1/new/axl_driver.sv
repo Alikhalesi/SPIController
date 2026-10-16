@@ -63,7 +63,7 @@ logic[7:0] r_addr,next_addr;
 logic [7:0] r_transfered_byte_count,next_transfered_byte_count;
 logic  r_finish,next_finish;
 logic  r_transaction_type,next_transaction_type;
-logic[1:0] r_counter,next_counter;
+
     
     always_ff @(posedge clk, negedge nrst)
         begin
@@ -81,7 +81,7 @@ logic[1:0] r_counter,next_counter;
                     r_transfered_byte_count<=0;
                     r_finish<=0;
                     r_transaction_type<=0;
-                    r_counter<=0;
+                
                 end
              else
                 begin
@@ -97,7 +97,7 @@ logic[1:0] r_counter,next_counter;
                     r_transfered_byte_count<=next_transfered_byte_count;
                     r_finish<=next_finish;
                     r_transaction_type<=next_transaction_type;
-                    r_counter<=next_counter;
+           
                 end
         end 
     
@@ -109,18 +109,18 @@ logic[1:0] r_counter,next_counter;
     next_csn=r_csn;
     next_spi_master_din=r_spi_master_din;
     next_spi_master_start_transfer=r_spi_master_start_transfer;
-    next_ready=r_ready;
+    next_ready=0;
     next_instruction=r_instruction;
     next_addr=r_addr;
     next_transfered_byte_count=r_transfered_byte_count;
     next_finish=0;
     next_transaction_type=r_transaction_type;
-    next_counter=r_counter;
+
         case (r_state)
             IDLE:
                 begin
                 next_transfered_byte_count=0;
-                next_counter=0;
+            
                     if(start && spi_master_ready)
                         begin
                             next_instruction=instruction;
@@ -190,14 +190,14 @@ logic[1:0] r_counter,next_counter;
                 end
             TEAR_DOWN_TRANSACTION:
                 begin
-                next_csn=1;
-                if(r_counter==2'd2)
-                    begin
+            
+                    next_csn=1;
+           
+                  
                         next_state=IDLE;
                         next_finish=1;
-                    end
-                else
-                    next_counter=r_counter+1;    
+             
+             
                 
                 end
             

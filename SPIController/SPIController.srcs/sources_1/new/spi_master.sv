@@ -113,6 +113,7 @@ output logic finished
                      end
                 P0:
                     begin
+                      next_sclk=0;
                        next_mosi = r_din[r_bit_count];
                        if(r_counter==dvsr)
                           begin
@@ -126,7 +127,7 @@ output logic finished
                     end
                 P1:
                     begin
-                    
+                      next_sclk=1;
                            if(r_counter==dvsr)
                             begin
                                 next_dout={r_dout[6:0],miso};
