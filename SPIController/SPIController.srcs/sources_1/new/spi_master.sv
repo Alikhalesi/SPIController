@@ -59,7 +59,7 @@ output logic finished
                 begin
                     r_ready<=0;
                     r_din<=0;
-                    r_dout<=0;
+                    r_dout<=1;
                     r_state<=IDLE;
                     r_sclk<=0; //as cpol=0
                     r_bit_count<=7;
@@ -88,7 +88,7 @@ output logic finished
             next_din=r_din;
             next_dout=r_dout;
             next_state=r_state;
-            next_sclk=r_sclk;
+            next_sclk=0;
             next_bit_count=r_bit_count;
             next_counter=r_counter;
             next_mosi=r_mosi;
