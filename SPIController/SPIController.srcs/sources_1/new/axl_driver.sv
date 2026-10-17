@@ -20,7 +20,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module adxl_driver #(localparam int READ_COUNT=2,localparam int WRITE_COUNT=1,localparam logic[7:0] READ_PATTERN=8'd0)
+module adxl_driver #(localparam logic[7:0] READ_PATTERN=8'd0)
 (
     input logic clk,
 input logic nrst,
@@ -36,7 +36,9 @@ input logic [7:0] addr,
 output logic finish,
 output logic data_phase,
 input logic transaction_type,
-input logic[7:0] write_data
+input logic[7:0] write_data,
+input logic[7:0] write_count,
+input logic[7:0] read_count
     );
     
       
@@ -63,6 +65,8 @@ logic[7:0] r_addr,next_addr;
 logic [7:0] r_transfered_byte_count,next_transfered_byte_count;
 logic  r_finish,next_finish;
 logic  r_transaction_type,next_transaction_type;
+logic[7:0]  r_read_count,next_read_count;
+logic[7:0]  r_write_count,next_write_count;
 
     
     always_ff @(posedge clk, negedge nrst)
@@ -81,6 +85,8 @@ logic  r_transaction_type,next_transaction_type;
                     r_transfered_byte_count<=0;
                     r_finish<=0;
                     r_transaction_type<=0;
+                    r_read_count<=0;
+                    r_write_count=0;
                 
                 end
              else
@@ -97,7 +103,8 @@ logic  r_transaction_type,next_transaction_type;
                     r_transfered_byte_count<=next_transfered_byte_count;
                     r_finish<=next_finish;
                     r_transaction_type<=next_transaction_type;
-           
+                    r_read_count<=next_read_count;
+                    r_write_count<=next_write_count;
                 end
         end 
     
@@ -115,6 +122,8 @@ logic  r_transaction_type,next_transaction_type;
     next_transfered_byte_count=r_transfered_byte_count;
     next_finish=0;
     next_transaction_type=r_transaction_type;
+    next_write_count=r_write_count;
+    next_read_count=r_read_count;
 
         case (r_state)
             IDLE:
@@ -128,6 +137,8 @@ logic  r_transaction_type,next_transaction_type;
                             next_transaction_type=transaction_type;
                             next_ready=0;
                             next_state=TEAR_UP_TRANSACTION;
+                            next_read_count=read_count;
+                            next_write_count=write_count;
                         end
                     else
                         begin
@@ -163,7 +174,7 @@ logic  r_transaction_type,next_transaction_type;
                     next_spi_master_start_transfer=0;
                     if (r_spi_master_finished)
                         begin
-                           if(r_transfered_byte_count==WRITE_COUNT)
+                           if(r_transfered_byte_count==r_write_count)
                                 next_state=TEAR_DOWN_TRANSACTION;
                            else
                                 begin
@@ -178,7 +189,7 @@ logic  r_transaction_type,next_transaction_type;
                  next_spi_master_start_transfer=0;
                     if (r_spi_master_finished)
                         begin
-                           if(r_transfered_byte_count==READ_COUNT)
+                           if(r_transfered_byte_count==r_read_count)
                                 next_state=TEAR_DOWN_TRANSACTION;
                            else
                                 begin

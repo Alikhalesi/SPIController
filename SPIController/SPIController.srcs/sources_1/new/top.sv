@@ -31,7 +31,9 @@ output logic[7:0] sseg_data,
 output logic[7:0] sseg_ctrl,
 input logic btn,
 input logic btnr,
-output logic led
+output logic led,
+output logic led_motion,
+input logic ACL_INT2
 
     );
     
@@ -91,6 +93,8 @@ debouncer btnr_debouncer(.d(btnr),.q(btnr_debounced),.clk(clk),.nrst(synced_rst)
      logic [7:0] r_instruction,next_instruction;
      logic [7:0] r_addr,next_addr;
      logic [7:0] r_write_data,next_write_data;
+     logic [7:0] r_write_count,next_write_count;
+     logic [7:0] r_read_count,next_read_count;
      logic r_transaction_type,next_transaction_type;
      logic [31:0] r_counter,next_counter;
     //
@@ -125,7 +129,9 @@ debouncer btnr_debouncer(.d(btnr),.q(btnr_debounced),.clk(clk),.nrst(synced_rst)
 .finish(driver_finished),
 .data_phase(data_phase),
 .transaction_type(r_transaction_type),
-.write_data(r_write_data)
+.write_data(r_write_data),
+.write_count(r_write_count),
+.read_count(r_read_count)
     );
   
  
@@ -143,7 +149,9 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
 
     
     //this code is temporary replacement of software code ,
-    typedef enum logic [4:0] {IDLE=4'd0,RESET_AXL=4'd2,SET_MEASURE_MODE=4'd3,READ_TEMPS=4'd4,READ_TEMPS_1=4'd5,READ_TEMPS_2=4'd6} state;
+
+    typedef enum logic [4:0] {IDLE=4'd0,RESET_AXL=4'd2,WRITE_20=4'd3,WRITE_21=4'd4,WRITE_23=4'd5,WRITE_24=4'd6,WRITE_25=4'd7,WRITE_27=4'd8
+    ,WRITE_2B=4'd9,WRITE_2D=4'd10,READ_TEMPS=4'd11} state;
     state r_state,next_state;
 
     always_ff @(posedge clk,negedge synced_rst)
@@ -157,6 +165,8 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                     r_write_data<=0;
                     r_transaction_type<=0;
                     r_counter<=0;
+                    r_write_count<=0;
+                    r_read_count<=0;
                 end
             else
                 begin
@@ -167,10 +177,132 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                     r_write_data<=next_write_data;
                     r_transaction_type<=next_transaction_type;
                     r_counter<=next_counter;
+                    r_write_count<=next_write_count;
+                    r_read_count<=next_read_count;
                     
                 end
         end
+    //GEt TEMP START
+     //  typedef enum logic [4:0] {IDLE=4'd0,RESET_AXL=4'd2,SET_MEASURE_MODE=4'd3,READ_TEMPS=4'd4,READ_TEMPS_1=4'd5,READ_TEMPS_2=4'd6} state; 
+//    always_comb
+//        begin
+//            next_state=r_state;
+//            next_start_transaction=0;
+//            next_instruction=r_instruction;
+//            next_addr=r_addr;
+//            next_write_data=r_write_data;
+//            next_transaction_type=r_transaction_type;
+//            next_counter=r_counter;
+//   next_read_count=r_read_count;
+//            next_write_count<=r_write_count;
+//            case (r_state)
+//                IDLE:
+//                    begin
+//                        if(btn_delayed)
+//                            begin
+//                                next_state=RESET_AXL;
+//                                next_counter=0;
+//                            end
+//                    end
+//                RESET_AXL:
+//                    begin
+//                          next_instruction=WRITE_REGISTER;
+//                          next_addr=8'h1F;
+//                          next_write_data=8'h52;
+//                          next_transaction_type=0;  
+//                          next_start_transaction=1;
+//                          next_state=SET_MEASURE_MODE;
+//                    end
+//                SET_MEASURE_MODE:
+//                    begin
+//                         next_start_transaction=0;
+//                         if(driver_ready)
+//                            begin
+//                              if (r_counter==32'd100_000)
+//                                begin
+//                                     next_instruction=WRITE_REGISTER;
+//                                     next_addr=8'h2d;
+//                                     next_write_data=8'b00001010;
+//                                     next_transaction_type=0;
+//                                     next_start_transaction=1;
+//                                     next_state=READ_TEMPS;
+//                                     next_counter=0;
+//                                end
+                                
+//                            else
+//                                begin
+//                                    next_counter=r_counter+1;
+//                               end
+                        
+//                            end
+//                         else
+//                            begin
+                            
+//                            end
+//                    end
+//                    READ_TEMPS:
+//                        begin
+//                          next_start_transaction=0;
+//                            if(driver_ready)
+//                             if (r_counter==32'd100_000)
+                                
+//                                    begin
+//                                         next_instruction=READ_REGISTER;
+//                                         next_addr=8'h14;
+//                                         next_transaction_type=1;
+//                                         next_start_transaction=1;
+//                                         next_state=READ_TEMPS_1;
+//                                          next_counter=0;
+//                                    end
+//                                             else
+//                                begin
+//                                    next_counter=r_counter+1;
+//                               end
+//                        end
+//                    READ_TEMPS_1:
+//                    begin
+//                         next_start_transaction=0;
+//                            if(driver_ready)
+//                            if (r_counter==32'd1)
+//                                    begin
+//                                         next_instruction=READ_REGISTER;
+//                                         next_addr=8'h2d;
+//                                         next_transaction_type=1;
+//                                         next_start_transaction=1;
+//                                         next_state=READ_TEMPS_2;
+//                                          next_counter=0;
+//                                    end
+//                                 else
+//                                begin
+//                                    next_counter=r_counter+1;
+//                               end
+//                    end
+//                     READ_TEMPS_2:
+//                    begin
+//                         next_start_transaction=0;
+//                            if(driver_ready)
+//                            if (r_counter==32'd1)
+//                                    begin
+//                                         next_instruction=READ_REGISTER;
+//                                         next_addr=8'h2d;
+//                                         next_transaction_type=1;
+//                                         next_start_transaction=1;
+//                                         next_state=IDLE;
+//                                          next_counter=0;
+//                                    end
+//                                 else
+//                                begin
+//                                    next_counter=r_counter+1;
+//                               end
+//                    end
+                    
+//            endcase
+//        end
+    //GET TEMP FINISHED
     
+    
+        // Rotation alert
+     
     always_comb
         begin
             next_state=r_state;
@@ -180,6 +312,8 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
             next_write_data=r_write_data;
             next_transaction_type=r_transaction_type;
             next_counter=r_counter;
+            next_read_count=r_read_count;
+            next_write_count=r_write_count;
             case (r_state)
                 IDLE:
                     begin
@@ -196,20 +330,217 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                           next_write_data=8'h52;
                           next_transaction_type=0;  
                           next_start_transaction=1;
-                          next_state=SET_MEASURE_MODE;
+                          next_state=WRITE_20;
                     end
-                SET_MEASURE_MODE:
+                WRITE_20:
                     begin
                          next_start_transaction=0;
                          if(driver_ready)
                             begin
-                              if (r_counter==32'd100_000)
+                              if (r_counter==32'd1000_000)
                                 begin
                                      next_instruction=WRITE_REGISTER;
-                                     next_addr=8'h2d;
-                                     next_write_data=8'b00001010;
+                                     next_addr=8'h20;
+                                     next_write_data=8'hFA;
                                      next_transaction_type=0;
                                      next_start_transaction=1;
+                                     next_write_count=8'd1;
+                                     next_state=WRITE_21;
+                                     next_counter=0;
+                                end
+                                
+                            else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        
+                            end
+                         else
+                            begin
+                            
+                            end
+                    end
+                        WRITE_21:
+                    begin
+                         next_start_transaction=0;
+                         if(driver_ready)
+                            begin
+                              if (r_counter==32'd1)
+                                begin
+                                     next_instruction=WRITE_REGISTER;
+                                     next_addr=8'h21;
+                                     next_write_data=8'h0;
+                                     next_transaction_type=0;
+                                     next_start_transaction=1;
+                                     next_write_count=8'd1;
+                                     next_state=WRITE_23;
+                                     next_counter=0;
+                                end
+                                
+                            else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        
+                            end
+                         else
+                            begin
+                            
+                            end
+                    end
+                     WRITE_23:
+                    begin
+                         next_start_transaction=0;
+                         if(driver_ready)
+                            begin
+                              if (r_counter==32'd1)
+                                begin
+                                     next_instruction=WRITE_REGISTER;
+                                     next_addr=8'h23;
+                                     next_write_data=8'h96;
+                                     next_transaction_type=0;
+                                     next_start_transaction=1;
+                                     next_write_count=8'd1;
+                                     next_state=WRITE_24;
+                                     next_counter=0;
+                                end
+                                
+                            else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        
+                            end
+                         else
+                            begin
+                            
+                            end
+                    end
+                    WRITE_24:
+                    begin
+                         next_start_transaction=0;
+                         if(driver_ready)
+                            begin
+                              if (r_counter==32'd1)
+                                begin
+                                     next_instruction=WRITE_REGISTER;
+                                     next_addr=8'h24;
+                                     next_write_data=8'h0;
+                                     next_transaction_type=0;
+                                     next_start_transaction=1;
+                                     next_write_count=8'd1;
+                                     next_state=WRITE_25;
+                                     next_counter=0;
+                                end
+                                
+                            else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        
+                            end
+                         else
+                            begin
+                            
+                            end
+                    end
+                     WRITE_25:
+                    begin
+                         next_start_transaction=0;
+                         if(driver_ready)
+                            begin
+                              if (r_counter==32'd1)
+                                begin
+                                     next_instruction=WRITE_REGISTER;
+                                     next_addr=8'h25;
+                                     next_write_data=8'h1E;
+                                     next_transaction_type=0;
+                                     next_start_transaction=1;
+                                     next_write_count=8'd1;
+                                     next_state=WRITE_27;
+                                     next_counter=0;
+                                end
+                                
+                            else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        
+                            end
+                         else
+                            begin
+                            
+                            end
+                    end
+                      WRITE_27:
+                    begin
+                         next_start_transaction=0;
+                         if(driver_ready)
+                            begin
+                              if (r_counter==32'd1)
+                                begin
+                                     next_instruction=WRITE_REGISTER;
+                                     next_addr=8'h27;
+                                     next_write_data=8'h3F;
+                                     next_transaction_type=0;
+                                     next_start_transaction=1;
+                                     next_write_count=8'd1;
+                                     next_state=WRITE_2B;
+                                     next_counter=0;
+                                end
+                                
+                            else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        
+                            end
+                         else
+                            begin
+                            
+                            end
+                    end
+                    WRITE_2B:
+                    begin
+                         next_start_transaction=0;
+                         if(driver_ready)
+                            begin
+                              if (r_counter==32'd1)
+                                begin
+                                     next_instruction=WRITE_REGISTER;
+                                     next_addr=8'h2B;
+                                     next_write_data=8'h40;
+                                     next_transaction_type=0;
+                                     next_start_transaction=1;
+                                     next_write_count=8'd1;
+                                     next_state=WRITE_2D;
+                                     next_counter=0;
+                                end
+                                
+                            else
+                                begin
+                                    next_counter=r_counter+1;
+                               end
+                        
+                            end
+                         else
+                            begin
+                            
+                            end
+                    end
+                      WRITE_2D:
+                    begin
+                         next_start_transaction=0;
+                         if(driver_ready)
+                            begin
+                              if (r_counter==32'd1)
+                                begin
+                                     next_instruction=WRITE_REGISTER;
+                                     next_addr=8'h2D;
+                                     next_write_data=8'h0A;
+                                     next_transaction_type=0;
+                                     next_start_transaction=1;
+                                     next_write_count=8'd1;
                                      next_state=READ_TEMPS;
                                      next_counter=0;
                                 end
@@ -229,14 +560,15 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                         begin
                           next_start_transaction=0;
                             if(driver_ready)
-                             if (r_counter==32'd100_000)
+                             if (r_counter==32'd1)
                                 
                                     begin
                                          next_instruction=READ_REGISTER;
-                                         next_addr=8'h14;
+                                         next_addr=8'h20;
                                          next_transaction_type=1;
                                          next_start_transaction=1;
-                                         next_state=READ_TEMPS_1;
+                                         next_state=IDLE;
+                                          next_read_count=8'd14;
                                           next_counter=0;
                                     end
                                              else
@@ -244,45 +576,13 @@ acc_subscriber seven_seg_subscriber(.clk(clk),
                                     next_counter=r_counter+1;
                                end
                         end
-                    READ_TEMPS_1:
-                    begin
-                         next_start_transaction=0;
-                            if(driver_ready)
-                            if (r_counter==32'd1)
-                                    begin
-                                         next_instruction=READ_REGISTER;
-                                         next_addr=8'h2d;
-                                         next_transaction_type=1;
-                                         next_start_transaction=1;
-                                         next_state=READ_TEMPS_2;
-                                          next_counter=0;
-                                    end
-                                 else
-                                begin
-                                    next_counter=r_counter+1;
-                               end
-                    end
-                     READ_TEMPS_2:
-                    begin
-                         next_start_transaction=0;
-                            if(driver_ready)
-                            if (r_counter==32'd1)
-                                    begin
-                                         next_instruction=READ_REGISTER;
-                                         next_addr=8'h2d;
-                                         next_transaction_type=1;
-                                         next_start_transaction=1;
-                                         next_state=IDLE;
-                                          next_counter=0;
-                                    end
-                                 else
-                                begin
-                                    next_counter=r_counter+1;
-                               end
-                    end
-                    
+                   
             endcase
         end
+ //   Rotation alert
     
-     assign led= r_state==IDLE; 
+    
+    
+     assign led= r_state==IDLE;
+     assign led_motion=ACL_INT2; 
 endmodule
